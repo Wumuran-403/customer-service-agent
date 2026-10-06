@@ -1,0 +1,26 @@
+services:
+  # ---------- Postgres (长期记忆) ----------
+  postgres:
+    image: postgres:15
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+      POSTGRES_DB: memory
+    ports:
+      - "5432:5432"
+
+  # ---------- FastAPI 应用 ----------
+  # Milvus 复用宿主机上已在跑的 milvus-standalone（19530），
+  # 通过 host.docker.internal 从容器访问宿主机。
+  app:
+    build: .
+    ports:
+      - "8000:8000"
+    environment:
+      - MILVUS_URI=http://host.docker.internal:19530
+      - POSTGRES_URL=postgresql://postgres:postgres@postgres:5432/memory
+    env_file: .env
+    depends_on:
+      - postgres
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
